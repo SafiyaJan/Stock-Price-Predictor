@@ -1,7 +1,11 @@
 # import required packages
 import pandas as pd
 import numpy as np
+from keras.models import Sequential
+from keras.layers import LSTM, Dense
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+import matplotlib.pyplot as plt
 
 # YOUR IMPLEMENTATION
 # Thoroughly comment your code to make it easy to follow
@@ -28,7 +32,7 @@ def create_dataset():
 		# array to gather the features from past 3 days 
 		sample_features = []
 
-		# print (i,i-1,i-2,i-3)
+		print (i,i-1,i-2,i-3)
 
 		# gather the features from the past 3 days 
 		sample_features.append(data_frame[i].tolist())
@@ -50,6 +54,9 @@ def create_dataset():
 	features = np.asarray(features)
 	labels = np.asarray(labels).reshape(len(labels),1)
 
+	print (len(features))
+	print (len(labels))
+
 	# append labels as an extra column
 	features = (np.append(features,labels,axis=1))
 
@@ -68,10 +75,85 @@ def create_dataset():
 	test.to_csv('data/test_data_RNN.csv', index = False)
 
 
+# scale data to have values between 0 and 1
+def preprocess_data(data):
+
+	scaler = MinMaxScaler()
+	scaler.fit(data)
+	# print (scaler.data_max_)
+	return scaler, scaler.transform(data)
+
+
 if __name__ == "__main__": 
 
-	create_dataset()
+	# create_dataset()
+
 	# 1. load your training data
+
+	# load data and preprocess data to have values between 0 and 1
+	df_train = pd.read_csv('data/train_data_RNN.csv', sep=',').to_numpy()
+	df_test = pd.read_csv('data/test_data_RNN.csv', sep=',').to_numpy()
+	train_scalar,preprocess_train = preprocess_data(df_train)
+	test_scalar,preprocess_test = preprocess_data(df_test)
+	
+	train_data = preprocess_train[:,0:-1]
+	train_label = preprocess_train[:,[-1]]
+
+	test_data = preprocess_test[:,0:-1]
+	test_label = preprocess_test[:,[-1]]
+
+	train_data = train_data.reshape((train_data.shape[0],1,train_data.shape[1]))
+	test_data = test_data.reshape((test_data.shape[0],1,test_data.shape[1]))
+
+	print (train_data.shape)
+
+
+	model = Sequential()
+	model.add(LSTM(50, input_shape = (train_data.shape[1],train_data.shape[2])))
+	model.add(Dense(1))
+	model.compile(loss='mae',optimizer='adam')
+
+	model.fit(train_data,train_label,epochs=10, verbose=2, validation_data = (test_data,test_label))
+
+	x_axis = list(np.arange(0,len(test_label),1))
+
+	x_axis = np.arange(50)
+
+	# plt.plot(x_axis,np.asarray(history.history['loss']))
+	# plt.plot(x_axis,np.asarray(history.history['val_loss']))
+	# plt.legend(['Training', 'Testing'])
+	# plt.xlabel('Number of Epochs')
+	# plt.ylabel('Loss')
+	# plt.title('Loss for training and testing')
+	# plt.grid()
+	# plt.show()
+
+
+	#forecast
+	print (test_data.shape)
+	xnew = test_data
+	ynew = model.predict(xnew)
+
+	print (xnew)
+	print ("Pred - ",ynew[0:10].flatten())
+	print ("Acc - ", test_label[0:10].flatten())
+
+
+	plt.bar(x_axis,ynew[0:50].flatten(),0.3)
+	plt.bar(x_axis+0.3,test_label[0:50].flatten(),0.3)
+	plt.legend(['Predicted', 'Actual Values'])
+	plt.ylabel('Stock Price')
+	plt.title('Predicted Stock Price v/s Actual Stock Price')
+	plt.show()
+
+
+
+
+	
+
+
+	
+
 
 	# 2. Train your network
 	# 		Make sure to print your training loss within training to show progress
