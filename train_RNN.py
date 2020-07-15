@@ -6,6 +6,8 @@ from keras.layers import LSTM, Dense
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 import matplotlib.pyplot as plt
+import keras
+import pickle
 
 # YOUR IMPLEMENTATION
 # Thoroughly comment your code to make it easy to follow
@@ -102,57 +104,49 @@ if __name__ == "__main__":
 	test_data = preprocess_test[:,0:-1]
 	test_label = preprocess_test[:,[-1]]
 
-	train_data = train_data.reshape((train_data.shape[0],1,train_data.shape[1]))
-	test_data = test_data.reshape((test_data.shape[0],1,test_data.shape[1]))
+	train_data = train_data.reshape(train_data.shape[0],1,train_data.shape[1])
+	test_data = test_data.reshape(test_data.shape[0],1,test_data.shape[1])
 
 	print (train_data.shape)
 
+	print (train_data.shape[1],train_data.shape[2])
+
 
 	model = Sequential()
-	model.add(LSTM(50, input_shape = (train_data.shape[1],train_data.shape[2])))
+	model.add(LSTM(64, input_shape = (train_data.shape[1],train_data.shape[2])))
 	model.add(Dense(1))
 	model.compile(loss='mae',optimizer='adam')
 
-	model.fit(train_data,train_label,epochs=10, verbose=2, validation_data = (test_data,test_label))
-
-	x_axis = list(np.arange(0,len(test_label),1))
-
-	x_axis = np.arange(50)
-
-	# plt.plot(x_axis,np.asarray(history.history['loss']))
-	# plt.plot(x_axis,np.asarray(history.history['val_loss']))
-	# plt.legend(['Training', 'Testing'])
-	# plt.xlabel('Number of Epochs')
-	# plt.ylabel('Loss')
-	# plt.title('Loss for training and testing')
-	# plt.grid()
-	# plt.show()
+	history = model.fit(train_data,train_label,epochs=20, verbose=2, validation_data = (test_data,test_label))
 
 
-	#forecast
-	print (test_data.shape)
-	xnew = test_data
-	ynew = model.predict(xnew)
+	model.save("models/S3JAN_model")
 
-	print (xnew)
-	print ("Pred - ",ynew[0:10].flatten())
-	print ("Acc - ", test_label[0:10].flatten())
-
-
-	plt.bar(x_axis,ynew[0:50].flatten(),0.3)
-	plt.bar(x_axis+0.3,test_label[0:50].flatten(),0.3)
-	plt.legend(['Predicted', 'Actual Values'])
-	plt.ylabel('Stock Price')
-	plt.title('Predicted Stock Price v/s Actual Stock Price')
+	plt.plot(np.asarray(history.history['loss']))
+	plt.plot(np.asarray(history.history['val_loss']))
+	plt.legend(['Training', 'Testing'])
+	plt.xlabel('Number of Epochs')
+	plt.ylabel('Loss')
+	plt.title('Loss for training and testing')
+	plt.grid()
 	plt.show()
 
+	# #forecast
+	# print (test_data.shape)
+	# xnew = test_data
+	# ynew = model.predict(xnew)
+
+	# print (xnew)
+	# print ("Pred - ",ynew[0:10].flatten())
+	# print ("Acc - ", test_label[0:10].flatten())
 
 
-
-	
-
-
-	
+	# plt.bar(x_axis,ynew[0:50].flatten(),0.3)
+	# plt.bar(x_axis+0.3,test_label[0:50].flatten(),0.3)
+	# plt.legend(['Predicted', 'Actual Values'])
+	# plt.ylabel('Stock Price')
+	# plt.title('Predicted Stock Price v/s Actual Stock Price')
+	# plt.show()
 
 
 	# 2. Train your network
