@@ -16,8 +16,10 @@ def create_dataset():
 	
 	# retrieve data from csv file as a Dataframe and remove unwanted columns
 	data_frame = pd.read_csv("data/q2_dataset.csv")
-	data_frame = data_frame.drop('Date',1)
+	# data_frame = data_frame.drop('Date',1)
 	data_frame = data_frame.drop(' Close/Last',1)
+	dates = data_frame["Date"]
+	data_frame = data_frame.drop('Date',1)
 
 	# conver data frame into numpy
 	data_frame = data_frame.to_numpy()
@@ -34,7 +36,7 @@ def create_dataset():
 		# array to gather the features from past 3 days 
 		sample_features = []
 
-		print (i,i-1,i-2,i-3)
+		# print (i,i-1,i-2,i-3)
 
 		# gather the features from the past 3 days 
 		sample_features.append(data_frame[i].tolist())
@@ -60,7 +62,8 @@ def create_dataset():
 	print (len(labels))
 
 	# append labels as an extra column
-	features = (np.append(features,labels,axis=1))
+	features = np.append(features,labels,axis=1)
+
 
 	# create dataframe from features arrray
 	df = pd.DataFrame(data = features, columns=['Day1Volume','Day1Open',
@@ -68,6 +71,7 @@ def create_dataset():
 		'Day2High','Day2Low','Day3Volume','Day3Open',
 		'Day3High','Day3Low', 'Target'])
 
+	df.insert(0,"Date",dates, False)
 
 	# split data frame into train and test set
 	train, test = train_test_split(df, test_size=0.3, shuffle=True)
@@ -93,8 +97,10 @@ if __name__ == "__main__":
 	# 1. load your training data
 
 	# load data and preprocess data to have values between 0 and 1
-	df_train = pd.read_csv('data/train_data_RNN.csv', sep=',').to_numpy()
-	df_test = pd.read_csv('data/test_data_RNN.csv', sep=',').to_numpy()
+	df_train = pd.read_csv('data/train_data_RNN.csv', sep=',').to_numpy()[:,1:]
+	df_test = pd.read_csv('data/test_data_RNN.csv', sep=',').to_numpy()[:,1:]
+	# print (df_train[:,1:-1].shape)
+
 	train_scalar,preprocess_train = preprocess_data(df_train)
 	test_scalar,preprocess_test = preprocess_data(df_test)
 	
@@ -107,18 +113,18 @@ if __name__ == "__main__":
 	train_data = train_data.reshape(train_data.shape[0],1,train_data.shape[1])
 	test_data = test_data.reshape(test_data.shape[0],1,test_data.shape[1])
 
-	print (train_data.shape)
-
-	print (train_data.shape[1],train_data.shape[2])
-
+	# 2. Train your network
+	# 		Make sure to print your training loss within training to show progress
+	# 		Make sure you print the final training loss
 
 	model = Sequential()
-	model.add(LSTM(64, input_shape = (train_data.shape[1],train_data.shape[2])))
+	model.add(LSTM(2, input_shape = (train_data.shape[1],train_data.shape[2])))
 	model.add(Dense(1))
 	model.compile(loss='mae',optimizer='adam')
 
-	history = model.fit(train_data,train_label,epochs=20, verbose=2, validation_data = (test_data,test_label))
+	history = model.fit(train_data,train_label,epochs=20, verbose=1, validation_data = (test_data,test_label))
 
+	# 3. Save your model
 
 	model.save("models/S3JAN_model")
 
@@ -131,26 +137,3 @@ if __name__ == "__main__":
 	plt.grid()
 	plt.show()
 
-	# #forecast
-	# print (test_data.shape)
-	# xnew = test_data
-	# ynew = model.predict(xnew)
-
-	# print (xnew)
-	# print ("Pred - ",ynew[0:10].flatten())
-	# print ("Acc - ", test_label[0:10].flatten())
-
-
-	# plt.bar(x_axis,ynew[0:50].flatten(),0.3)
-	# plt.bar(x_axis+0.3,test_label[0:50].flatten(),0.3)
-	# plt.legend(['Predicted', 'Actual Values'])
-	# plt.ylabel('Stock Price')
-	# plt.title('Predicted Stock Price v/s Actual Stock Price')
-	# plt.show()
-
-
-	# 2. Train your network
-	# 		Make sure to print your training loss within training to show progress
-	# 		Make sure you print the final training loss
-
-	# 3. Save your model
