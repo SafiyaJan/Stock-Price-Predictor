@@ -130,12 +130,12 @@ if __name__ == "__main__":
 
 	model.save("models/S3JAN_model")
 
-	plt.plot(np.asarray(history.history['loss']))
-	plt.plot(np.asarray(history.history['val_loss']))
-	plt.legend(['Training', 'Testing'])
-	plt.xlabel('Number of Epochs')
-	plt.ylabel('Loss')
-	plt.title('Loss for training and testing')
-	plt.grid()
-	plt.show()
+	# plt.plot(np.asarray(history.history['loss']))
+	# plt.plot(np.asarray(history.history['val_loss']))
+	# plt.legend(['Training', 'Testing'])
+	# plt.xlabel('Number of Epochs')
+	# plt.ylabel('Loss')
+	# plt.title('Loss for training and testing')
+	# plt.grid()
+	# plt.show()
 

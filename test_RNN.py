@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
 	testScore = math.sqrt(mean_squared_error(test_label_scalar.inverse_transform(test_label), test_label_scalar.inverse_transform(prediction)))
 	
-	print ("RMSE - ",testScore)
+	# print ("RMSE - ",testScore)
 
 	plt.plot(date,test_label_scalar.inverse_transform(prediction))
 	plt.plot(date,test_label_scalar.inverse_transform(test_label))
