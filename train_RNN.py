@@ -18,8 +18,8 @@ def create_dataset():
 	data_frame = pd.read_csv("data/q2_dataset.csv")
 	# data_frame = data_frame.drop('Date',1)
 	data_frame = data_frame.drop(' Close/Last',1)
-	dates = data_frame["Date"]
-	data_frame = data_frame.drop('Date',1)
+	# dates = data_frame["Date"]
+	# data_frame = data_frame.drop('Date',1)
 
 	# conver data frame into numpy
 	data_frame = data_frame.to_numpy()
@@ -27,9 +27,12 @@ def create_dataset():
 	# create array to store features and target values of each sample/data point
 	features = []
 	labels = []
+	dates = []
 
 	# start from the earliest date
 	i = len(data_frame)-1
+
+	print (data_frame)
 
 	while (i >= 3):
 
@@ -44,10 +47,12 @@ def create_dataset():
 		sample_features.append(data_frame[i-2].tolist())
 
 		# store the 4th day opening price as target
-		labels.append((data_frame[i-3][1]))
+		labels.append(data_frame[i-3][2])
+		dates.append(data_frame[i-3][0])
 
 		# concatenate all features together to create a row of features for one sample
-		sample_features = sample_features[0] + sample_features[1] + sample_features[2]
+		sample_features = sample_features[0][1:] + sample_features[1][1:] + sample_features[2][1:]
+
 
 		# add features for current sample to list of all the sample
 		features.append(sample_features)
@@ -58,12 +63,8 @@ def create_dataset():
 	features = np.asarray(features)
 	labels = np.asarray(labels).reshape(len(labels),1)
 
-	print (len(features))
-	print (len(labels))
-
 	# append labels as an extra column
 	features = np.append(features,labels,axis=1)
-
 
 	# create dataframe from features arrray
 	df = pd.DataFrame(data = features, columns=['Day1Volume','Day1Open',
@@ -72,6 +73,7 @@ def create_dataset():
 		'Day3High','Day3Low', 'Target'])
 
 	df.insert(0,"Date",dates, False)
+
 
 	# split data frame into train and test set
 	train, test = train_test_split(df, test_size=0.3, shuffle=True)
@@ -92,7 +94,7 @@ def preprocess_data(data):
 
 if __name__ == "__main__": 
 
-	# create_dataset()
+	create_dataset()
 
 	# 1. load your training data
 
