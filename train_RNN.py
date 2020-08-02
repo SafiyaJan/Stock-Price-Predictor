@@ -8,6 +8,9 @@ from sklearn.preprocessing import MinMaxScaler
 import matplotlib.pyplot as plt
 import keras
 import pickle
+import math
+
+from sklearn.metrics import mean_squared_error
 
 # YOUR IMPLEMENTATION
 # Thoroughly comment your code to make it easy to follow
@@ -16,12 +19,11 @@ def create_dataset():
 	
 	# retrieve data from csv file as a Dataframe and remove unwanted columns
 	data_frame = pd.read_csv("data/q2_dataset.csv")
-	# data_frame = data_frame.drop('Date',1)
+	
+	# drop column that is not required
 	data_frame = data_frame.drop(' Close/Last',1)
-	# dates = data_frame["Date"]
-	# data_frame = data_frame.drop('Date',1)
 
-	# conver data frame into numpy
+	# convert data frame into numpy array
 	data_frame = data_frame.to_numpy()
 
 	# create array to store features and target values of each sample/data point
@@ -32,21 +34,20 @@ def create_dataset():
 	# start from the earliest date
 	i = len(data_frame)-1
 
-	print (data_frame)
+	# print (data_frame)
 
 	while (i >= 3):
 
 		# array to gather the features from past 3 days 
 		sample_features = []
 
-		# print (i,i-1,i-2,i-3)
-
 		# gather the features from the past 3 days 
 		sample_features.append(data_frame[i].tolist())
 		sample_features.append(data_frame[i-1].tolist())
 		sample_features.append(data_frame[i-2].tolist())
 
-		# store the 4th day opening price as target
+
+		# store the 4th day opening price as target and save its date
 		labels.append(data_frame[i-3][2])
 		dates.append(data_frame[i-3][0])
 
@@ -72,70 +73,63 @@ def create_dataset():
 		'Day2High','Day2Low','Day3Volume','Day3Open',
 		'Day3High','Day3Low', 'Target'])
 
+
+	# add dates to dataset
 	df.insert(0,"Date",dates, False)
 
-
 	# split data frame into train and test set
-	train, test = train_test_split(df, test_size=0.3, shuffle=True)
+	train, test = train_test_split(df, test_size=0.3, shuffle=True, random_state = 10)
 
 	# store train and test set
 	train.to_csv('data/train_data_RNN.csv', index = False)
 	test.to_csv('data/test_data_RNN.csv', index = False)
 
 
-# scale data to have values between 0 and 1
-def preprocess_data(data):
-
-	scaler = MinMaxScaler()
-	scaler.fit(data)
-	# print (scaler.data_max_)
-	return scaler, scaler.transform(data)
-
-
 if __name__ == "__main__": 
 
-	create_dataset()
+	# Uncomment the line below to create the dataset
+	# create_dataset()
 
 	# 1. load your training data
 
-	# load data and preprocess data to have values between 0 and 1
+	# load data 
 	df_train = pd.read_csv('data/train_data_RNN.csv', sep=',').to_numpy()[:,1:]
 	df_test = pd.read_csv('data/test_data_RNN.csv', sep=',').to_numpy()[:,1:]
-	# print (df_train[:,1:-1].shape)
 
-	train_scalar,preprocess_train = preprocess_data(df_train)
-	test_scalar,preprocess_test = preprocess_data(df_test)
+	# scale data to have values between 0 and 1
+	scaler = MinMaxScaler()
+	preprocess_train = scaler.fit_transform(df_train)
+	preprocess_test = scaler.fit_transform(df_test)
 	
+	# split data into features and labels
 	train_data = preprocess_train[:,0:-1]
 	train_label = preprocess_train[:,[-1]]
 
 	test_data = preprocess_test[:,0:-1]
 	test_label = preprocess_test[:,[-1]]
 
+	# reshape data to feed into network
 	train_data = train_data.reshape(train_data.shape[0],1,train_data.shape[1])
 	test_data = test_data.reshape(test_data.shape[0],1,test_data.shape[1])
 
 	# 2. Train your network
 	# 		Make sure to print your training loss within training to show progress
 	# 		Make sure you print the final training loss
-
 	model = Sequential()
-	model.add(LSTM(2, input_shape = (train_data.shape[1],train_data.shape[2])))
+	model.add(LSTM(128,return_sequences=True, input_shape = (train_data.shape[1],train_data.shape[2])))
+	model.add(LSTM(128))
 	model.add(Dense(1))
-	model.compile(loss='mae',optimizer='adam')
+	model.compile(loss='mse',optimizer='adam')
 
-	history = model.fit(train_data,train_label,epochs=20, verbose=1, validation_data = (test_data,test_label))
+	history = model.fit(train_data,train_label,epochs=30,verbose=1, validation_data = (test_data,test_label))
+
+	# Print training loss
+	print ("Final Training Loss - ", history.history['loss'][-1])
+	print ("Final Testing Loss - ", history.history['val_loss'][-1])
 
 	# 3. Save your model
+	model.save("models/20868193_RNN_model")
 
-	model.save("models/S3JAN_model")
 
-	# plt.plot(np.asarray(history.history['loss']))
-	# plt.plot(np.asarray(history.history['val_loss']))
-	# plt.legend(['Training', 'Testing'])
-	# plt.xlabel('Number of Epochs')
-	# plt.ylabel('Loss')
-	# plt.title('Loss for training and testing')
-	# plt.grid()
-	# plt.show()
-
+ 
+	
